@@ -10,7 +10,7 @@ async function bootstrap() {
   };
 
   const app = await NestFactory.create(AppModule, { httpsOptions });
-
+  app.enableCors({ origin: 'http://cs2-network.ru:3050', credentials: true });
   app.setGlobalPrefix('/api');
 
   const config = new DocumentBuilder()

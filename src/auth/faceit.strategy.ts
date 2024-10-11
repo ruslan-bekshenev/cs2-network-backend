@@ -1,38 +1,48 @@
-// faceit.strategy.ts
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-oauth2';
-
+import { Strategy } from 'passport-faceit';
+import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
+import { randomBytes, createHash } from 'node:crypto';
 @Injectable()
 export class FaceitStrategy extends PassportStrategy(Strategy, 'faceit') {
-  constructor() {
+  constructor(private configService: ConfigService) {
+    const code_verifier = randomBytes(32).toString('base64url');
+    const code_challenge = createHash('sha256')
+      .update(code_verifier)
+      .digest('base64url');
     super({
-      authorizationURL: 'https://accounts.faceit.com/oauth/authorize',
-      tokenURL: 'https://accounts.faceit.com/oauth/token',
-      clientID: process.env.FACEIT_CLIENT_ID, // Ваш client_id
-      clientSecret: process.env.FACEIT_CLIENT_SECRET, // Ваш client_secret
-      callbackURL: 'https://cs2-network.ru:1337/auth/faceit/callback', // Ваш redirect_uri
-      scope: ['openid'],
+      clientID: configService.get('FACEIT_CLIENT_ID'),
+      clientSecret: configService.get('FACEIT_CLIENT_SECRET'),
+      callbackURL: 'https://cs2-network.ru:3000/auth/faceit/callback',
+      scope: 'openid email profile',
+      redirect_popup: true,
       passReqToCallback: true,
+      code_verifier,
+      code_challenge,
+      client_secret_basic: configService.get('FACEIT_CLIENT_SECRET'),
+      id_token_signing_alg_values_supported: 'RS256',
     });
   }
 
   async validate(
-    req: Request,
     accessToken: string,
     refreshToken: string,
+    params: any,
     profile: any,
     done: any,
   ) {
+    console.log(accessToken, refreshToken, params, profile, done);
     try {
-      // Логика валидации и поиска пользователя в БД на основе профиля Faceit
+      const userData = jwt.decode(params.id_token);
       const user = {
-        faceitId: profile.id, // faceit ID пользователя
-        accessToken,
-        refreshToken,
+        faceitId: userData.guid,
+        faceitAvatar: userData.picture,
+        faceitEmail: userData.email,
+        faceitNickname: userData.nickname,
       };
 
-      done(null, user); // Вернуть пользователя для сессии
+      done(null, user);
     } catch (err) {
       done(err, false);
     }

@@ -7,6 +7,6 @@ import { FaceitStrategy } from './faceit.strategy'; // Импортируем с
 @Module({
   imports: [PassportModule.register({ defaultStrategy: 'faceit' })],
   controllers: [AuthController],
-  providers: [FaceitStrategy], // Регистрируем стратегию
+  providers: [FaceitStrategy],
 })
 export class AuthModule {}
