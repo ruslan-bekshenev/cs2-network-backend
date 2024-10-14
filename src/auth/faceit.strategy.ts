@@ -7,21 +7,14 @@ import { randomBytes, createHash } from 'node:crypto';
 @Injectable()
 export class FaceitStrategy extends PassportStrategy(Strategy, 'faceit') {
   constructor(private configService: ConfigService) {
-    const code_verifier = randomBytes(32).toString('base64url');
-    const code_challenge = createHash('sha256')
-      .update(code_verifier)
-      .digest('base64url');
+    // const code_verifier = randomBytes(32).toString('base64url');
+    // const code_challenge = createHash('sha256')
+    //   .update(code_verifier)
+    //   .digest('base64url');
     super({
       clientID: configService.get('FACEIT_CLIENT_ID'),
       clientSecret: configService.get('FACEIT_CLIENT_SECRET'),
       callbackURL: 'https://cs2-network.ru:3000/auth/faceit/callback',
-      scope: 'openid email profile',
-      redirect_popup: true,
-      passReqToCallback: true,
-      code_verifier,
-      code_challenge,
-      client_secret_basic: configService.get('FACEIT_CLIENT_SECRET'),
-      id_token_signing_alg_values_supported: 'RS256',
     });
   }
 
